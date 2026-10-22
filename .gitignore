@@ -1,0 +1,27 @@
+# ===== 敏感配置（含 API 密钥，绝不提交）=====
+ai_config.json
+ai_config.local.json
+
+# ===== 打包产物 / 输出（不进仓库）=====
+*.exe
+*.spec
+dist/
+build/
+output/
+__pycache__/
+*.pyc
+*.pyo
+
+# ===== 用户素材与调试产物（体积大、含私人参考图）=====
+assets/
+
+# ===== 临时调试脚本 =====
+run_*.py
+test_*.py
+
+# ===== 系统 / 编辑器 =====
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
+*.log

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TK 图文工作台</title>
+<style>
+  :root {
+    --bg: #0d0d14;
+    --card: #17171f;
+    --card2: #1f1f2b;
+    --line: #2b2b3a;
+    --fg: #ececf2;
+    --dim: #9a9aaa;
+    --gold: #d4af37;
+    --gold2: #e8c766;
+    --good: #58c08a;
+    --bad: #e05656;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+    font-size: 14px;
+    padding: 24px 28px;
+  }
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 6px; }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+  header .sub { color: var(--dim); font-size: 12px; }
+  .steps { display: flex; gap: 8px; margin: 14px 0 18px; }
+  .step { flex: 1; text-align: center; padding: 9px 0; border-radius: 10px;
+          background: var(--card); color: var(--dim); font-size: 12.5px;
+          border: 1px solid var(--line); }
+  .step.active { background: linear-gradient(135deg, #1c1a10, #23200f);
+                 color: var(--gold); border-color: var(--gold); font-weight: 700; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+          padding: 18px 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 15px; color: var(--gold); font-weight: 700; margin-bottom: 12px; }
+  .card h2 .tag { display: inline-block; background: #262411; color: var(--gold);
+                  border-radius: 6px; padding: 1px 8px; font-size: 11px; margin-right: 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  button { font-family: inherit; cursor: pointer; border: none; border-radius: 9px;
+           padding: 10px 18px; font-size: 13.5px; font-weight: 600; }
+  .btn-ghost { background: var(--card2); color: var(--fg); border: 1px solid var(--line); }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #14141c; }
+  .btn-gold:hover { filter: brightness(1.08); }
+  .btn-gold:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-small { padding: 6px 12px; font-size: 12px; border-radius: 7px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; margin-top: 12px; }
+  .thumb { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--card2); }
+  .thumb img { width: 100%; display: block; aspect-ratio: 9/16; object-fit: cover; }
+  .thumb .nm { font-size: 10.5px; color: var(--dim); padding: 5px 6px; white-space: nowrap;
+               overflow: hidden; text-overflow: ellipsis; background: var(--card2); }
+  .thumb .x { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.65); color: #fff;
+              border-radius: 50%; width: 20px; height: 20px; line-height: 20px; text-align: center;
+              font-size: 12px; cursor: pointer; }
+  .thumb .x:hover { background: var(--bad); }
+  .panel { background: var(--card2); border-radius: 10px; padding: 14px 16px; margin-top: 12px; }
+  .panel pre { font-family: Consolas, monospace; font-size: 12.5px; white-space: pre-wrap;
+               color: var(--fg); line-height: 1.65; }
+  .swatches { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .swatch { display: flex; align-items: center; gap: 8px; background: var(--card2);
+            border-radius: 9px; padding: 6px 10px; border: 1px solid var(--line); }
+  .swatch .dot { width: 26px; height: 26px; border-radius: 7px; border: 1px solid rgba(255,255,255,.2); }
+  .swatch span { font-size: 11.5px; color: var(--dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip { background: #262411; color: var(--gold); border-radius: 16px; padding: 4px 12px; font-size: 12px; }
+  label.f { display: inline-block; font-size: 11px; color: var(--dim); margin: 8px 2px 3px; }
+  input[type=text], input[type=number], select {
+    background: var(--card2); color: var(--fg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font-family: inherit; font-size: 13px; outline: none;
+  }
+  input:focus { border-color: var(--gold); }
+  .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 14px; }
+  .radio-line { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .radio-line label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .radio-line input[type=radio] { accent-color: var(--gold); }
+  .prodinfo { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+  .result-card { border: 1px solid var(--line); border-radius: 12px; background: var(--card2);
+                 padding: 14px; }
+  .result-card .head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .result-card .badge { font-size: 11px; background: #262411; color: var(--gold); border-radius: 6px; padding: 2px 8px; }
+  .result-card .imgs { display: flex; gap: 10px; }
+  .result-card .imgs img { width: 150px; aspect-ratio: 9/16; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+  details { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  summary { cursor: pointer; color: var(--gold); font-size: 12.5px; font-weight: 600; }
+  details .pack { font-family: Consolas, monospace; font-size: 12px; line-height: 1.7; white-space: pre-wrap;
+                  color: var(--fg); background: var(--card); border-radius: 8px; padding: 12px; margin-top: 8px; }
+  #log { color: var(--dim); font-size: 12px; font-family: Consolas, monospace; line-height: 1.6;
+         max-height: 130px; overflow-y: auto; margin-top: 6px; white-space: pre-wrap; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(212,175,55,.3);
+             border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite;
+             vertical-align: -2px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+  .muted { color: var(--dim); font-size: 12px; }
+  .empty { color: var(--dim); text-align: center; padding: 26px 0; font-size: 13px; }
+  footer { color: var(--dim); font-size: 11px; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TK 图文工作台</h1>
+  <span class="sub">导入参考图文 → 自动分析 → 批量生成英/西双语图文 → 直接发布</span>
+  <span id="readyBadge" style="display:inline-block;font-size:11px;border-radius:6px;padding:3px 10px;background:#12331f;color:#58c08a;">● 运行中</span>
+</header>
+
+<div class="steps">
+  <div class="step active" id="s1">① 导入参考图文</div>
+  <div class="step" id="s2">② 自动分析</div>
+  <div class="step" id="s3">③ 配置生成</div>
+  <div class="step" id="s4">④ 结果导出</div>
+</div>
+
+<!-- 隐藏的标准文件选择控件（弹系统对话框，最可靠） -->
+<input type="file" id="refInput" accept="image/png,image/jpeg,image/webp,image/bmp" multiple class="hidden">
+<input type="file" id="prodInput" accept="image/png,image/jpeg,image/webp" multiple class="hidden">
+
+<!-- 卡1：导入 -->
+<div class="card">
+  <h2><span class="tag">STEP 1</span>导入参考图文（可多选：钩子页 / 产品页 / 整帖截图）</h2>
+  <div class="row">
+    <button class="btn-gold" onclick="pickRefs()">＋ 选择参考图片</button>
+    <span class="muted">点击后弹出系统文件选择框，支持多选</span>
+  </div>
+  <div class="grid" id="refGrid"></div>
+</div>
+
+<!-- 卡2：分析 -->
+<div class="card">
+  <h2><span class="tag">STEP 2</span>自动分析结构与配色</h2>
+  <div class="row">
+    <button class="btn-gold" id="btnAnalyze" onclick="doAnalyze()">开始分析</button>
+    <span class="muted" id="analyzeHint">分析主色、布局、文字区位置</span>
+  </div>
+  <div class="panel hidden" id="anaPanel">
+    <pre id="anaSummary"></pre>
+    <div class="chips" id="anaChips"></div>
+    <div class="row" style="margin-top:12px; gap:18px; align-items:flex-start;">
+      <div id="anaSwatches"></div>
+      <div id="anaAnnotated" style="flex:0 0 auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 卡3：配置 -->
+<div class="card">
+  <h2><span class="tag">STEP 3</span>生成配置</h2>
+  <div class="form-grid">
+    <div>
+      <label class="f">图文语言</label><br>
+      <div class="radio-line">
+        <label><input type="radio" name="lang" value="auto" checked>自动跟随参考图</label>
+        <label><input type="radio" name="lang" value="es">西语</label>
+        <label><input type="radio" name="lang" value="en">英语</label>
+        <label><input type="radio" name="lang" value="both">双语各半</label>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:3px">自动：参考图是西语就生成西语，是英语就生成英语（需AI精分析识别语言）</div>
+    </div>
+    <div>
+      <label class="f">生成套数（1-20）</label><br>
+      <input type="number" id="sets" value="5" min="1" max="20" style="width:90px;">
+    </div>
+    <div>
+      <label class="f">图文风格（账号人格）</label><br>
+      <select id="style_mode" style="width:100%">
+        <option value="auto">自动轮换（4个真实账号人格）</option>
+        <option value="apg">APG 省钱反讽（西语）</option>
+        <option value="conmariaa">ConMariaa 闺蜜悬念（西语·黄字）</option>
+        <option value="jonhy">Jonhy 直白实用（英语）</option>
+        <option value="viviana">Viviana 俏皮梗（西语）</option>
+      </select>
+      <div class="muted" style="font-size:11px;margin-top:3px">每套随机一种人格：文案/字体/高亮/贴纸都跟着变</div>
+    </div>
+    <div>
+      <label class="f">产品实拍图（可多选，多张自动轮换）</label><br>
+      <button class="btn-ghost btn-small" onclick="pickProduct()">选择产品图（可多选）…</button>
+      <div id="prodImgList" class="muted" style="margin-top:4px;">未选择 → 用内置香水瓶素材（价格页用上传的真实图）</div>
+    </div>
+    <div>
+      <label class="f">输出位置</label><br>
+      <button class="btn-ghost btn-small" onclick="openOutput()">打开输出文件夹</button>
+    </div>
+  </div>
+
+  <div class="prodinfo">
+    <div class="muted" style="margin-bottom:4px;">🤖 AI 裂变生图（接入 OpenAI 兼容接口，为每套自动生成全新画面，不是同一张图换文字）</div>
+    <div class="form-grid">
+      <div>
+        <label class="f">接口地址</label><br>
+        <input type="text" id="ai_base" value="https://api.kkone.vip" style="width:100%">
+      </div>
+      <div>
+        <label class="f">API 密钥（仅保存在本机）</label><br>
+        <input type="password" id="ai_key" style="width:100%" placeholder="sk-...">
+      </div>
+      <div>
+        <label class="f">生图模型</label><br>
+        <select id="ai_model" style="width:100%"><option value="">先点「测试连接」</option></select>
+      </div>
+      <div>
+        <label class="f">画面风格</label><br>
+        <select id="ai_style" style="width:100%">
+          <option value="ugc">实拍UGC风（推荐）</option>
+          <option value="ads">高级广告风</option>
+          <option value="mix">混合随机</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="ai_gen" checked> 每张都用 AI 生成全新画面（钩子/卖点/产品特写）
+      </label>
+      <button class="btn-ghost btn-small" onclick="testAi()">🔌 测试连接</button>
+      <button class="btn-ghost btn-small" onclick="saveAi(true)">💾 保存设置</button>
+      <span id="aiStatus" class="muted"></span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="ai_analyze"> 用分析模型精分析参考图排版（多模态模型看图文结构，更准）
+      </label>
+    </div>
+    <div style="margin-top:8px">
+      <label class="f">分析模型（多模态，可选）</label><br>
+      <select id="ai_analyze_model" style="width:100%">
+        <option value="">自动（内置规则分析，不花额度）</option>
+        <option value="gemini-3.8-flash" selected>gemini-3.8-flash（推荐）</option>
+        <option value="gpt-5.6-sol">gpt-5.6-sol</option>
+        <option value="gpt-6-astra">gpt-6-astra</option>
+        <option value="grok-4.6">grok-4.6</option>
+        <option value="grok-4.7">grok-4.7</option>
+      </select>
+      <div class="hint">勾选上方开关并选好模型后，「开始分析」会用 AI 精分析参考图排版</div>
+    </div>
+  </div>
+
+  <div class="prodinfo">
+    <div class="muted" style="margin-bottom:4px;">产品信息（可直接修改，默认已填 QAWAFI Voyage Nova 数据）</div>
+    <div class="form-grid" id="prodForm"></div>
+  </div>
+</div>
+
+<!-- 卡4：生成 -->
+<div class="card">
+  <h2><span class="tag">STEP 4</span>一键生成 + 导出</h2>
+  <div class="row">
+    <button class="btn-gold" id="btnGen" onclick="doGenerate()">🚀 开始生成多套图文</button>
+    <button class="btn-ghost hidden" id="btnStop" onclick="stopGen()">⏹ 停止生成</button>
+    <button class="btn-ghost hidden" id="btnZip" onclick="exportZip()">📦 打包ZIP</button>
+    <span class="muted">每套 = 钩子页 + 价格页 + 发布包（正文/标签/评论钩子/生图提示词）</span>
+  </div>
+  <div id="errPanel" class="hidden" style="margin-top:10px;background:#2a1414;border:1px solid #5a2a2a;border-radius:10px;padding:10px 14px;font-size:12px;color:#ffb0b0;line-height:1.6;"></div>
+  <div id="resultGrid" class="grid hidden"></div>
+  <div id="log"></div>
+</div>
+
+<footer>目标市场：美国 · 界面中文 · 图文语言自动跟随参考图（西语/英语） · 纯本地运行，AI生图需接接口</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let cfgCache = null;
+  let refThumbs = [];
+
+  // ---------- API 层：通过本地 HTTP 调用 Python 后端 ----------
+  async function callApi(method, args) {
+    const resp = await fetch('/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: method, args: args || {} })
+    });
+    return resp.json();
+  }
+
+  function log(msg) {
+    const t = new Date().toTimeString().slice(0, 8);
+    $('log').textContent += `[${t}] ${msg}\n`;
+    $('log').scrollTop = $('log').scrollHeight;
+  }
+  window.onerror = function (msg, src, line) {
+    log('界面错误: ' + msg + ' (行' + line + ')');
+  };
+
+  function setStep(n) {
+    for (let i = 1; i <= 4; i++) $('s' + i).classList.toggle('active', i === n);
+  }
+  function packText(p) {
+    return `【${p.angle_name} · ${p.lang.toUpperCase()}】
+◆ 图1叠字（钩子）:
+${p.hook}
+
+◆ 图2价格卡:
+${p.price_text}
+
+◆ 发布正文:
+${p.caption}
+
+◆ 话题标签:
+${p.tags}
+
+◆ 评论钩子:
+${p.comment_hook}
+
+◆ 置顶评论:
+${p.pinned}
+
+◆ 图1英文生图提示词:
+${p.shot_prompt}
+
+◆ 图2产品图提示词:
+${p.product_prompt}`;
+  }
+
+  // ---------- STEP 1：参考图（HTML file input + 上传） ----------
+  function pickRefs() {
+    $('refInput').click();
+  }
+
+  $('refInput').addEventListener('change', async function (e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    log(`正在读取 ${files.length} 张图片…`);
+    try {
+      const payloads = [];
+      for (const f of files) {
+        payloads.push({ name: f.name, dataUrl: await readAsDataURL(f) });
+      }
+      const thumbs = await callApi('add_refs', { payloads });
+      if (thumbs.error) { log('导入失败: ' + thumbs.error); return; }
+      refThumbs = thumbs;
+      renderRefs(thumbs);
+      log(`已导入 ${thumbs.length} 张参考图 → 点击「开始分析」`);
+      setStep(2);
+    } catch (err) {
+      log('导入异常: ' + err);
+      alert('导入失败：' + err);
+    }
+    e.target.value = '';
+  });
+
+  function readAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error('读取文件失败'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function renderRefs(thumbs) {
+    $('refGrid').innerHTML = '';
+    if (!thumbs.length) { $('refGrid').innerHTML = '<div class="empty">尚未导入参考图</div>'; return; }
+    thumbs.forEach((t, i) => {
+      const d = document.createElement('div');
+      d.className = 'thumb';
+      d.innerHTML = `<img src="${t.b64}"><div class="nm">${escapeHtml(t.name)}</div><div class="x" onclick="removeRef(${i})">×</div>`;
+      $('refGrid').appendChild(d);
+    });
+  }
+
+  async function removeRef(i) {
+    try {
+      const r = await callApi('remove_ref', { path: refThumbs[i].path });
+      if (r && !r.error) { refThumbs = r; renderRefs(r); }
+    } catch (e) { log('删除异常: ' + e); }
+  }
+
+  // ---------- STEP 2：分析 ----------
+  async function doAnalyze() {
+    const btn = $('btnAnalyze');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>分析中…';
+    try {
+      const r = await callApi('analyze', { cfg: { ai_analyze: $('ai_analyze').checked } });
+      if (r.error) { log('分析失败: ' + r.error); btn.disabled = false; btn.textContent = '开始分析'; return; }
+      $('anaPanel').classList.remove('hidden');
+      $('anaSummary').textContent = r.summary;
+      $('anaChips').innerHTML = '';
+      (r.summary.match(/布局[^\n]+/g) || []).forEach(s => {
+        const c = document.createElement('span');
+        c.className = 'chip'; c.textContent = s.trim();
+        $('anaChips').appendChild(c);
+      });
+      $('anaSwatches').innerHTML = '';
+      (r.schemes || []).forEach(s => {
+        const d = document.createElement('div');
+        d.className = 'swatch';
+        d.innerHTML = `<div class="dot" style="background:linear-gradient(135deg,${s.top},${s.bottom})"></div>
+                       <span>${s.name}</span>
+                       <span style="color:${s.accent}">●</span>`;
+        $('anaSwatches').appendChild(d);
+      });
+      if (r.annotated) {
+        $('anaAnnotated').innerHTML = `<div class="muted" style="margin-bottom:4px;">文字区标注（绿=文字 蓝=图片）</div>
+                                       <img src="${r.annotated}" style="height:220px;border-radius:10px;border:1px solid var(--line)">`;
+      }
+      log('分析完成：已提取主色 / 布局结构 / 文字区位置');
+      if (r.ai_analyze_errors && r.ai_analyze_errors.length) {
+        $('analyzeHint').innerHTML = `<span style="color:var(--bad)">⚠ ${r.ai_analyze_errors.length} 张 AI 精分析失败（已自动重试并回退规则分析）</span>`;
+        log('⚠ AI精分析失败：' + r.ai_analyze_errors.join(' | '));
+      }
+      setStep(3);
+    } catch (e) { log('分析异常: ' + e); alert('分析失败：' + e); }
+    btn.disabled = false; btn.textContent = '开始分析';
+  }
+
+  // ---------- STEP 3：配置 ----------
+  let prodImgs = [];   // [{name, path, b64}]
+  function pickProduct() { $('prodInput').click(); }
+
+  $('prodInput').addEventListener('change', async function (e) {
+    const files = Array.from(e.target.files || []);
+    for (const f of files) {
+      try {
+        const r = await callApi('save_product_image', { payload: { name: f.name, dataUrl: await readAsDataURL(f) } });
+        if (r && !r.error) {
+          prodImgs.push({ name: r.name, path: r.path, b64: r.b64 });
+        } else { log('产品图设置失败: ' + (r && r.error)); }
+      } catch (err) { log('产品图异常: ' + err); }
+    }
+    renderProdImgs();
+    e.target.value = '';
+  });
+
+  function renderProdImgs() {
+    const el = $('prodImgList');
+    if (!prodImgs.length) { el.innerHTML = '未选择 → 用内置香水瓶素材（价格页用上传的真实图）'; return; }
+    el.innerHTML = prodImgs.map((p, i) =>
+      `<div style="display:inline-flex;align-items:center;gap:6px;margin:2px 10px 2px 0;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:4px 8px;">
+        <img src="${p.b64}" style="width:34px;height:34px;border-radius:6px;object-fit:cover">
+        <span style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(p.name)}</span>
+        <span style="font-size:10px;color:var(--dim)">${i + 1}/${prodImgs.length}</span>
+        <a href="javascript:void(0)" onclick="removeProdImg(${i})" style="color:#ff8a8a;font-size:13px;text-decoration:none">✕</a>
+      </div>`).join('');
+  }
+
+  async function removeProdImg(i) {
+    const p = prodImgs[i];
+    try {
+      const r = await callApi('remove_product_image', { payload: { path: p.path } });
+      if (r && !r.error) { prodImgs.splice(i, 1); renderProdImgs(); log('已删除产品图'); }
+      else { log('删除失败: ' + (r && r.error)); }
+    } catch (err) { log('删除异常: ' + err); }
+  }
+
+  function buildProdForm() {
+    const fields = [
+      ['brand', '品牌', 'QAWAFI'],
+      ['name', '品名', 'Voyage Nova'],
+      ['price_50', '价格50ml', '$25.99'],
+      ['price_100', '价格100ml', '$25.99'],
+      ['sale', '折扣', '50% OFF'],
+      ['orig_price', '划线原价（可选）', '$49.99'],
+      ['rating', '背书', '4.3★ / 19.2K reviews'],
+      ['sales', '销量背书', '153.7K sold · Best Seller'],
+      ['refund', '退货说明', 'Free returns · fast refund'],
+    ];
+    $('prodForm').innerHTML = '';
+    fields.forEach(([k, label, val]) => {
+      const w = document.createElement('div');
+      w.innerHTML = `<label class="f">${label}</label><br>
+        <input type="text" id="pf_${k}" value="${val}" style="width:100%">`;
+      $('prodForm').appendChild(w);
+    });
+  }
+
+  // ---------- STEP 4：生成 ----------
+  let genPoll = null;
+
+  async function doGenerate() {
+    const btn = $('btnGen');
+    const lang = document.querySelector('input[name=lang]:checked').value;
+    const sets = parseInt($('sets').value) || 5;
+    const cfg = { lang, sets, ai_generate: $('ai_gen').checked, style: $('ai_style').value,
+                  style_mode: $('style_mode').value };
+    ['brand', 'name', 'price_50', 'price_100', 'sale', 'orig_price', 'rating', 'sales', 'refund']
+      .forEach(k => cfg[k] = $('pf_' + k).value.trim());
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>裂变生成中…（并行出图，更快）';
+    $('btnStop').classList.remove('hidden');
+    $('btnZip').classList.add('hidden');
+    $('errPanel').classList.add('hidden');
+    // 轮询进度
+    genPoll = setInterval(async function () {
+      try {
+        const p = await callApi('get_progress');
+        if (p && p.total > 0) {
+          const st = p.state === 'generating' ? 'AI生图' : (p.state === 'rendering' ? '排版合成' : p.state);
+          $('aiStatus').textContent = `${st} ${p.done}/${p.total}${p.msg ? ' · ' + p.msg : ''}`;
+        }
+      } catch (e) {}
+    }, 800);
+
+    try {
+      const r = await callApi('generate', { cfg });
+      clearInterval(genPoll);
+      $('btnStop').classList.add('hidden');
+      if (r.error) { log('生成失败: ' + r.error); btn.disabled = false; btn.textContent = '🚀 开始生成多套图文'; return; }
+      cfgCache = r;
+      renderResults(r);
+      if (r.cancelled) {
+        log('⏹ 已停止生成（已完成的套已保留）');
+      } else {
+        log(`✅ 生成完成：${r.items.length} 套 → ${r.out_dir}`);
+      }
+      if (r.ai_errors && r.ai_errors.length) {
+        const bad = r.ai_errors.length;
+        $('errPanel').classList.remove('hidden');
+        $('errPanel').innerHTML = `<b>⚠ ${bad} 张 AI 生图失败（已自动重试、已回退本地排版）：</b><br>` +
+          r.ai_errors.map(e => escapeHtml(e)).join('<br>');
+        log(`⚠ ${bad} 张 AI 生图失败已回退本地排版`);
+      }
+      if (r.items.length) $('btnZip').classList.remove('hidden');
+      setStep(4);
+    } catch (e) { clearInterval(genPoll); $('btnStop').classList.add('hidden'); log('生成异常: ' + e); alert('生成失败：' + e); }
+    btn.disabled = false; btn.textContent = '🚀 开始生成多套图文';
+  }
+
+  async function stopGen() {
+    try {
+      await callApi('request_cancel');
+      log('已请求停止，正在收尾…');
+    } catch (e) { log('停止请求异常: ' + e); }
+  }
+
+  async function exportZip() {
+    try {
+      const r = await callApi('export_zip');
+      if (r.ok) {
+        log('✅ 已打包：' + r.name + '（' + (r.size / 1024 / 1024).toFixed(1) + ' MB）→ 已打开输出文件夹');
+      } else {
+        log('打包失败: ' + r.error);
+      }
+    } catch (e) { log('打包异常: ' + e); }
+  }
+
+  function renderResults(r) {
+    const grid = $('resultGrid');
+    grid.classList.remove('hidden');
+    grid.innerHTML = '';
+    r.items.forEach((it, i) => {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.style.gridColumn = 'span 2';
+      const pack = packText(it.pack);
+      const imgsHtml = (it.images || []).map((im, k) =>
+        `<div><img src="${im.b64}"><div class="muted" style="font-size:11px;text-align:center">${im.name.replace('.png', '')}</div></div>`
+      ).join('');
+      card.innerHTML = `
+        <div class="head">
+          <b style="color:var(--gold)">套${i + 1}</b>
+          <span class="badge">${it.angle}</span>
+          <span class="badge">${it.lang.toUpperCase()}</span>
+          <span class="badge">${it.scheme}</span>
+          <span class="badge">${it.slides || 1}张轮播</span>
+        </div>
+        <div class="imgs">
+          ${imgsHtml}
+        </div>
+        <details>
+          <summary>查看发布包（文案 / 标签 / 评论钩子 / 生图提示词）</summary>
+          <div class="pack" id="pack_${i}">${escapeHtml(pack)}</div>
+          <button class="btn-ghost btn-small" style="margin-top:8px" onclick="copyPack(${i})">📋 复制发布包</button>
+        </details>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function copyPack(i) {
+    const el = $('pack_' + i);
+    navigator.clipboard.writeText(el.textContent).then(
+      () => log(`已复制 套${i + 1} 发布包到剪贴板`),
+      () => log('复制失败（请手动选择复制）')
+    );
+  }
+
+  function openOutput() {
+    callApi('open_output');
+  }
+
+  // ---------- AI 生图设置 ----------
+  async function loadAi() {
+    try {
+      const c = await callApi('get_ai_config');
+      if (c && !c.error) {
+        $('ai_base').value = c.base_url || 'https://api.kkone.vip';
+        if (c.api_key) $('ai_key').value = c.api_key;
+        if (c.analyze_model) {
+          const asel = $('ai_analyze_model');
+          const aexists = Array.from(asel.options).some(o => o.value === c.analyze_model);
+          if (!aexists) {
+            const op = document.createElement('option');
+            op.value = c.analyze_model; op.textContent = c.analyze_model;
+            asel.appendChild(op);
+          }
+          asel.value = c.analyze_model;
+        }
+        if (c.model) {
+          const sel = $('ai_model');
+          const exists = Array.from(sel.options).some(o => o.value === c.model);
+          if (!exists) {
+            const op = document.createElement('option');
+            op.value = c.model; op.textContent = c.model;
+            sel.appendChild(op);
+          }
+          sel.value = c.model;
+        }
+      }
+    } catch (e) { log('加载AI设置失败: ' + e); }
+  }
+
+  async function saveAi(showMsg) {
+    const cfg = {
+      base_url: $('ai_base').value.trim(),
+      api_key: $('ai_key').value.trim(),
+      model: $('ai_model').value,
+      analyze_model: $('ai_analyze_model').value.trim()
+    };
+    try {
+      const r = await callApi('save_ai_config', { cfg });
+      if (r.ok) {
+        if (showMsg) log('AI生图设置已保存到本机 ai_config.json');
+        return true;
+      } else {
+        log('保存失败: ' + r.error);
+        return false;
+      }
+    } catch (e) { log('保存异常: ' + e); return false; }
+  }
+
+  async function testAi() {
+    $('aiStatus').textContent = '测试中…';
+    await saveAi(false);
+    try {
+      const r = await callApi('test_ai');
+      if (r.ok) {
+        $('aiStatus').innerHTML = `<span style="color:var(--good)">✓ ${r.msg}</span>`;
+        const sel = $('ai_model');
+        sel.innerHTML = '';
+        const imgs = (r.image_models && r.image_models.length) ? r.image_models : (r.models || []);
+        (imgs).forEach(m => {
+          const op = document.createElement('option');
+          op.value = m; op.textContent = m;
+          sel.appendChild(op);
+        });
+        if (r.image_models && r.image_models.length) {
+          log('AI生图连接成功。可用生图模型：' + r.image_models.join(', '));
+        } else {
+          log('AI生图连接成功，但未识别到生图模型（已列出全部模型，请确认账号生图权限）：' + (r.models || []).join(', '));
+        }
+        // 分析模型下拉：把推荐池 + 接口探测到的 gemini/gpt/grok 模型填进去
+        if (r.analyze_models && r.analyze_models.length) {
+          const cur = $('ai_analyze_model').value;
+          const asel = $('ai_analyze_model');
+          asel.innerHTML = '<option value="">自动（内置规则分析，不花额度）</option>';
+          const seen = new Set();
+          r.analyze_models.forEach(m => {
+            if (seen.has(m)) return; seen.add(m);
+            const op = document.createElement('option');
+            op.value = m; op.textContent = m + (m === 'gemini-3.8-flash' ? '（推荐）' : '');
+            asel.appendChild(op);
+          });
+          if (cur) asel.value = cur;
+        }
+      } else {
+        $('aiStatus').innerHTML = `<span style="color:var(--bad)">✗ ${r.msg}</span>`;
+        log('AI生图连接失败: ' + r.msg);
+      }
+    } catch (e) { $('aiStatus').textContent = '异常: ' + e; log('测试异常: ' + e); }
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // 初始化
+  buildProdForm();
+  loadAi();
+  $('refGrid').innerHTML = '<div class="empty">尚未导入参考图 —— 点击「＋ 选择参考图片」开始</div>';
+  log('欢迎使用 TK 图文工作台。第1步：导入参考图；第3步：填好AI生图密钥后即可裂变生成。');
+</script>
+</body>
+</html>
